@@ -1,0 +1,16 @@
+# Entornos y secretos
+.env
+*.key
+*.pem
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+
+# Temporales
+*.bak
+*.tmp
+*-backup*
