@@ -11,7 +11,7 @@ Laboratorio práctico de **pentesting y evaluación de controles de cibersegurid
 
 ---
 
-**Integrantes:** Abraham Castro · Bárbara Saavedra &nbsp;&nbsp;|&nbsp;&nbsp; **Docente:** Jaime Andrés Gómez González &nbsp;&nbsp;|&nbsp;&nbsp; **Sección:** 002V &nbsp;&nbsp;|&nbsp;&nbsp; **Fecha:** `[COMPLETAR: fecha de entrega]`
+**Integrantes:** Abraham Castro · Bárbara Saavedra &nbsp;&nbsp;|&nbsp;&nbsp; **Docente:** Jaime Andrés Gómez González &nbsp;&nbsp;|&nbsp;&nbsp; **Sección:** 002V &nbsp;&nbsp;|&nbsp;&nbsp; **Fecha:** 23 de noviembre de 2026
 
 ---
 
